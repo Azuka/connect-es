@@ -31,6 +31,7 @@ import {
 } from "@connectrpc/connect-node";
 import type { FastifyInstance } from "fastify/types/instance";
 import type { FastifyRequest } from "fastify/types/request";
+import {Readable} from "stream";
 
 interface FastifyConnectPluginOptions extends ConnectRouterOptions {
   /**
@@ -178,8 +179,14 @@ function addNoopContentTypeParsers(instance: FastifyInstance): void {
 
 function noopContentTypeParser(
   _req: unknown,
-  _payload: unknown,
-  done: (err: null, body?: undefined) => void,
+  _payload: { body?: Buffer|Readable },
+  done: (err: null, body?: unknown) => void,
 ) {
-  done(null, undefined);
+  let {body} = _payload;
+
+  if (body instanceof Buffer) {
+    body = Readable.from(body);
+  }
+
+  done(null, body);
 }
